@@ -140,6 +140,21 @@
         </nav>
       </header>
       <!--  Header End -->
+      @if (Session::has('success'))
+    <div class="col-md-12 mt-4">
+        <div class="alert alert-success">
+        {{ Session::get('success')}}
+        </div>
+    </div>
+    @endif
+    @if (Session::has('error'))
+    <div class="col-md-12 mt-4">
+        <div class="alert alert-danger">
+        {{ Session::get('error')}}
+        </div>
+    </div>
+    @endif
+    
     @yield('main')
     </div>
   <script src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"  ></script>

@@ -78,10 +78,7 @@ class BillController extends Controller
         ]);
     }
 
-
     
-    
-
     public function create_bill(){
 
         $product_list = DB::table('products')->get();
@@ -89,12 +86,46 @@ class BillController extends Controller
         return view('customer.create_bill',['product_type'=>$product_list]);
     }
 
-    public function customerlist(Request $request){
-
+    public function customerlist(Request $request)
+    {
         $current_date = date('Y-m-d');
         $start_date = $request->input('start_date', $current_date);
         $end_date = $request->input('end_date', $current_date);
+    
+        $customer_list = CustomerDetail::with('payment:total_paid_amt,disc_amt,grand_total,c_id')
+            ->select(['id', 'name', 'mobile', 'bill_date'])
+            ->whereBetween('bill_date', [$start_date, $end_date])
+            ->orderBy('id','DESC')
+            ->paginate(2)
+            ->appends([
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+            ]);
+    
+        return view('customer.bill_list', [
+            'customer_list' => $customer_list,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+        ]);
+    }
 
+    public function viewBill($action, $id){
+
+        #$customer = CustomerDetail::find($id);
+        $customer = CustomerDetail::with(['purchases.product', 'payment'])
+                     ->findOrFail($id);
+
+
+        switch ($action) {
+            case 'view':
+                return view('customer.bill_view', ['data'=>$customer]);
+                
+            case 'edit':
+                return view('customer.bill_edit', ['data'=>$customer]);
+            default:
+                abort(404); 
+        }
 
     }
+    
 }

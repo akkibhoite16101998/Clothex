@@ -103,7 +103,7 @@ class UsersController extends Controller
         $user->role = $request->user_role;
         $user->save();
 
-        return redirect()->route('user.view',['action'=> 'edit', 'id'=> $id])->with('success','User Register Sucessfully');
+        return redirect()->route('user.view',['action'=> 'edit', 'id'=> $id])->with('success','User Update Sucessfully');
 
     }
 

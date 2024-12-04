@@ -48,6 +48,8 @@ Route::group(['middleware' => 'admin.auth'], function(){
 
     Route::get('cache_data', [UsersController::class, 'cache_data'])->name('cache_data');
     Route::get('customer/customerlist', [BillController::class, 'customerlist'])->name('customer.customerlist');
+    Route::get('customer/{action}/{id}',[BillController::class,'viewBill'])->name('customer.viewBill');
+    Route::post('customer_delete/{id}',[BillController::class,'bill_delete'])->name('customer.bill_delete');
 
 
 });
