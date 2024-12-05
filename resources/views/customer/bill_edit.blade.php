@@ -1,5 +1,10 @@
 @extends('layout/main_wrapper')
 @section('main')
+<style>
+    .red{
+        color: red;
+    }
+</style>
 <div class="container-fluid">
     <div class="card">
         <div class="card-body">
@@ -48,7 +53,9 @@
                                     @endphp
                                     @foreach($data->purchases as $p)
                                     <tr>
-                                        <td>{{ $sr_no++ }}</td>
+                                        <td><a href="javascript:void(0)"  onclick="delete_purchases_item({{ $p->id }});" ><i class="ti ti-trash red"></i></a>
+                                            {{ $sr_no++ }}
+                                        </td>
                                         <td>{{ $p->product->name ?? 'N/A' }}</td> 
                                         <td>{{ $p->quantity ?? '0' }}</td>
                                         <td>{{ $p->price ?? '0' }}</td>
@@ -67,9 +74,9 @@
                                 <p class="mb-1"><strong>Discount (%):</strong>{{ $data->payment->disc_percentage }}</p>
                             </div>
                             <div class="col-md-6 text-md-end">
-                                <p class="mb-1"><strong>Grand Total Amt:</strong> {{ $data->payment->grand_total }}</p>
-                                <p class="mb-1"><strong>Discount Amt:</strong> {{ $data->payment->disc_amt }}</p>
-                                <p class="mb-1"><strong>Total Amt:</strong> {{ $data->payment->total_paid_amt }}</p>
+                                <p class="mb-1" id="grand-total"><strong>Grand Total Amt:</strong> {{ $data->payment->grand_total }}</p>
+                                <p class="mb-1" id="disc-amt"><strong>Discount Amt:</strong> {{ $data->payment->disc_amt }}</p>
+                                <p class="mb-1" id="total-paid-amt"><strong>Total Amt:</strong> {{ $data->payment->total_paid_amt }}</p>
                             </div>
                         </div>
                     </div>
@@ -80,3 +87,59 @@
 </div>
 
 @endsection
+<script>
+    function delete_purchases_item(id) {
+        var delete_id = "";
+
+        if (id != "" && id > 0 && !isNaN(id)) {
+            delete_id = id;
+
+            var confirmDelete = window.confirm("Are you sure you want to delete this item?");
+            
+            if (confirmDelete) {
+
+                var reason = prompt("Please provide a reason for deleting this item:");
+                
+                if (reason && reason.trim() !== "")
+                {
+                    $.ajax({
+                        url: "{{ route('bills.delete_item') }}",  
+                        type: "POST",
+                        data: {
+                            "_token": "{{ csrf_token() }}",  
+                            "purchases_id": delete_id, 
+                            "reason": reason  
+                        },
+                        
+                        success: function(response) 
+                        {
+                            if (response.success) 
+                            {
+                                // Update the HTML with the new values from the response
+                                $('#grand-total').text(response.update_grand_total);
+                                $('#disc-amt').text(response.update_disc_amt);
+                                $('#total-paid-amt').text(response.update_total_paid_amt);
+
+                                // Optionally, show a success message
+                                alert(response.message);
+                            } else {
+                                alert(response.message);  // Show failure message
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            // Handle any errors here
+                            alert('An error occurred. Please try again.');
+                        }
+
+                    });
+                } else {
+                    alert("Reason is required for deletion.");
+                }
+            } else {
+                alert("Item deletion canceled.");
+            }
+        } else {
+            alert("Invalid ID.");
+        }
+    }
+</script>

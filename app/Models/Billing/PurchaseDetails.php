@@ -16,5 +16,10 @@ class PurchaseDetails extends Model
         return $this->belongsTo(\App\Models\Product::class, 'product_name', 'id');
     }
 
+    public function payment_details(){
+
+        return $this->belongsTo(PaymentDetails::class,'c_id', 'c_id');
+    }
+
 
 }
