@@ -57,8 +57,8 @@
                 <td>{{ $key + 1 }}</td>
                 <td>{{ $rec->name }} <br> {{ $rec->mobile }}</td>
                 <td>{{ \Carbon\Carbon::parse($rec->bill_date)->format('d/m/Y') }}</td>
-                <td><span class="badge bg-success">{{ $rec->payment->disc_amt}}</span> &nbsp;|| <span class="badge bg-dark">{{ $rec->payment->total_paid_amt}}</span></td>
-                <td><span class="badge bg-primary">{{ $rec->payment->grand_total}}</span></td>
+                <td><span class="badge bg-success">{{ $rec->payment->disc_amt ?? 0 }}</span> &nbsp;|| <span class="badge bg-dark">{{ $rec->payment->total_paid_amt ?? 0}}</span></td>
+                <td><span class="badge bg-primary">{{ $rec->payment->grand_total ?? 0 }}</span></td>
                 <td><!-- View Button -->
                     <a href="{{ route('customer.viewBill',['action' => 'view', 'id' => $rec->id]) }}" class="btn btn-primary" title="View"><i class="ti ti-eye"></i> </a>
                     <!-- Edit Button -->

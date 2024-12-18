@@ -66,6 +66,7 @@ Route::group(['middleware' => 'both.aceess'],function(){
     #15-11-2024
     Route::post('create_coustmer_bill', [BillController::class, 'create_coustmer_bill'])->name('bills.create_coustmer_bill');
     Route::post('bills/delete_item', [BillController::class,'DeleteCustomerItem'])->name('bills.delete_item');
+    Route::post('update_coustmer_bill/{id}',[BillController::class,'update_coustmer_bill'])->name('bills.update_coustmer_bill');
 
 });
 

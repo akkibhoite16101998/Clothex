@@ -10,9 +10,7 @@ use App\Models\Billing\CustomerPurchaseDeletion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
-
-
+use App\Events\InvoiceGenerated;
 
 class BillController extends Controller
 {
@@ -46,7 +44,8 @@ class BillController extends Controller
     
             $payment_details = new PaymentDetails();
             $payment_details->payment_mode = $request->payment_mode;
-            $payment_details->disc_percentage = $request->discount_percentage;
+            #$payment_details->disc_percentage = $request->discount_percentage;
+            $payment_details->disc_percentage = $request->discount_percentage ?? 0;
             $payment_details->disc_amt = $request->discount_amt;
             $payment_details->grand_total = $request->grand_total_amt;
             $payment_details->total_paid_amt = $request->total_pay_amt;
@@ -54,6 +53,22 @@ class BillController extends Controller
             $payment_details->save();
     
             if ($payment_details->id) {
+                /********************************************** */
+                $customer = CustomerDetail::with(['purchases.product', 'payment'])->findOrFail($customer_details->id);
+                // Prepare Invoice Details
+                $invoiceDetails = [
+                    'email' => 'bhoite780@gmail.com', // आप इसे $customer->email से भी ले सकते हैं अगर ईमेल कस्टमर में स्टोर हो।
+                    'name' => $customer->name,
+                    'mobile' => $customer->mobile,
+                    'date' => now(),
+                    'data' => $customer, // Pass the loaded customer data directly
+                ];
+
+                // Trigger Event
+                event(new InvoiceGenerated($invoiceDetails));
+
+
+                /******************************************************/
                 return redirect()->route('customer.bill')->with('success', 'Bill Generated Successfully!');
             }
         } else {
@@ -117,14 +132,15 @@ class BillController extends Controller
         #$customer = CustomerDetail::find($id);
         $customer = CustomerDetail::with(['purchases.product', 'payment'])
                      ->findOrFail($id);
-
+                     
+        $product_list = DB::table('products')->get();
 
         switch ($action) {
             case 'view':
                 return view('customer.bill_view', ['data'=>$customer]);
                 
             case 'edit':
-                return view('customer.bill_edit', ['data'=>$customer]);
+                return view('customer.bill_edit', ['data'=>$customer,'product_list'=>$product_list]);
             default:
                 abort(404); 
         }
@@ -134,7 +150,7 @@ class BillController extends Controller
     #this function use to delete coustomer item 
     public function DeleteCustomerItem(Request $request)
     {
-        $payment_auto_id = "";
+        $payment_auto_id = ""; $refundAmt = 0; $item_discount = 0;
         $purchases_id = $request->input('purchases_id');
         $reason = $request->input('reason');
 
@@ -149,13 +165,17 @@ class BillController extends Controller
         $product_id = $purchases->product_name; // Stored here id not name
         $product_quantity = $purchases->quantity;
         $product_price  = $purchases->price;
-        $disc_percentage  = $purchases->disc_percentage;
+        $disc_percentage  = $purchases->payment_details->disc_percentage;
         $user_id = Auth::id();
 
         $update_grand_total = $purchases->payment_details->grand_total - $purchases->total_amt;
         $item_discount = ($purchases->total_amt * $purchases->payment_details->disc_percentage) / 100;
         $update_disc_amt = $purchases->payment_details->disc_amt - $item_discount;
-        $update_total_paid_amt = $purchases->payment_details?->total_paid_amt ?? 0 - $purchases->total_amt + $item_discount;
+        $update_total_paid_amt = ($purchases->payment_details?->total_paid_amt ?? 0) - $purchases->total_amt + $item_discount;
+        
+        //store here how many amount refund to coustmer
+        $refundAmt = $purchases->total_amt - $item_discount;
+
         
         if ($payment_auto_id != "" && is_numeric($payment_auto_id)) {
             $payment_arr = PaymentDetails::find($payment_auto_id);
@@ -170,37 +190,46 @@ class BillController extends Controller
             $up_rec = $payment_arr->save();
 
             if ($up_rec) 
-            {
+            { 
                 $purchaseDeletion = new CustomerPurchaseDeletion();
                 $purchaseDeletion->c_id = $customer_id;
                 $purchaseDeletion->product_id  = $product_id;
                 $purchaseDeletion->quantity = $product_quantity;
-                $purchaseDeletion->product_price = $product_price;
+                $purchaseDeletion->price = $product_price;
                 $purchaseDeletion->disc_percentage = $disc_percentage;
                 $purchaseDeletion->deleted_by = $user_id;
                 $purchaseDeletion->reason = $reason;
                 $add_rec = $purchaseDeletion->save();
 
                 if ($add_rec) 
-                {
-                    if ($purchases->delete()) {
+                {   
+                    if ($purchases->delete()) 
+                    {
                         return response()->json([
                             'success' => true,
                             'message' => 'Item deleted successfully.',
                             'update_grand_total' => $update_grand_total,
                             'update_disc_amt' => $update_disc_amt,
-                            'update_total_paid_amt' => $update_total_paid_amt
+                            'update_total_paid_amt' => $update_total_paid_amt,
+                            'refundAmt' => $refundAmt
                         ]);
                     } else {
                         return response()->json(['error' => 'Failed to delete purchase details'], 500);
                     }
-                } else {
+                } else { 
                     return response()->json(['error' => 'Failed to record deletion in history'], 500);
                 }
-            } else {
+            } else { 
                 return response()->json(['error' => 'Failed to update payment details'], 500);
             }
         }
+    }
+
+    //update update_coustmer_bill function
+    public function update_coustmer_bill($id, Request $req){
+
+        dd($req->all());
+
     }
 
     

@@ -23,4 +23,11 @@ class AppServiceProvider extends ServiceProvider
         //
         Paginator::useBootstrap();
     }
+
+    protected $listen = [
+        \App\Events\InvoiceGenerated::class => [
+            \App\Listeners\SendInvoiceMail::class,
+        ],
+    ];
+    
 }

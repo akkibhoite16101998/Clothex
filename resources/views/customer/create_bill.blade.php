@@ -43,9 +43,6 @@
                     <div class="mb-3 col-md-4">
                         <label for="name" class="form-label">Product Type</label>
                         <select name="product_type[]" class="form-control" required>
-                            <!--<option value="shirt">Shirt</option>
-                            <option value="pant">Pant</option>
-                            <option value="curta">Curta</option>-->
                             <option value="">-- Select Product--</option>
                             @foreach ($product_type as $type)
                                 <option value="{{ $type->id }}">{{ $type->name }}</option>
